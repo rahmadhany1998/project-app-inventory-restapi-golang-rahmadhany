@@ -3,11 +3,13 @@ package handler
 import "project-app-inventory-restapi-golang-rahmadhany/service"
 
 type Handler struct {
-	UserHandler UserHandler
+	UserHandler     UserHandler
+	CategoryHandler CategoryHandler
 }
 
 func NewHandler(s service.Service) Handler {
 	return Handler{
-		UserHandler: NewUserHandler(s),
+		UserHandler:     NewUserHandler(s),
+		CategoryHandler: NewCategoryHandler(s),
 	}
 }

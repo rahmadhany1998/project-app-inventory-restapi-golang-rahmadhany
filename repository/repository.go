@@ -5,11 +5,13 @@ import (
 )
 
 type Repository struct {
-	UserRepo UserRepository
+	UserRepo     UserRepository
+	CategoryRepo CategoryRepository
 }
 
 func NewRepository(db *sql.DB) Repository {
 	return Repository{
-		UserRepo: NewUserRepository(db),
+		UserRepo:     NewUserRepository(db),
+		CategoryRepo: NewCategoryRepository(db),
 	}
 }
