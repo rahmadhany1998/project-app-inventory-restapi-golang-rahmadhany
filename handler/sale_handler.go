@@ -1,0 +1,54 @@
+package handler
+
+import (
+	"encoding/json"
+	"net/http"
+	"project-app-inventory-restapi-golang-rahmadhany/dto"
+	"project-app-inventory-restapi-golang-rahmadhany/service"
+	"project-app-inventory-restapi-golang-rahmadhany/utils"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
+)
+
+type SaleHandler struct {
+	Service service.Service
+}
+
+func NewSaleHandler(s service.Service) SaleHandler {
+	return SaleHandler{Service: s}
+}
+
+func (h *SaleHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	sales, err := h.Service.SaleService.GetAll()
+	if err != nil {
+		utils.WriteError(w, "Failed to get sales", http.StatusInternalServerError)
+		return
+	}
+
+	utils.WriteSuccess(w, "List of sales", sales)
+}
+
+func (h *SaleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	sale, err := h.Service.SaleService.GetByID(id)
+	if err != nil {
+		utils.WriteError(w, "Sale not found", http.StatusNotFound)
+		return
+	}
+	utils.WriteSuccess(w, "Sale found", sale)
+}
+
+func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateSaleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+	id, err := h.Service.SaleService.Create(req)
+	if err != nil {
+		utils.WriteError(w, "Failed to create sale", http.StatusInternalServerError)
+		return
+	}
+	utils.WriteSuccess(w, "Sale created", map[string]int{"id": id})
+}

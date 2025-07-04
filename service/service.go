@@ -8,6 +8,7 @@ type Service struct {
 	RackService      RackService
 	WarehouseService WarehouseService
 	ProductService   ProductService
+	SaleService      SaleService
 }
 
 func NewService(repo repository.Repository) Service {
@@ -17,5 +18,6 @@ func NewService(repo repository.Repository) Service {
 		RackService:      NewRackService(repo),
 		WarehouseService: NewWarehouseService(repo),
 		ProductService:   NewProductService(repo),
+		SaleService:      NewSaleService(repo),
 	}
 }
