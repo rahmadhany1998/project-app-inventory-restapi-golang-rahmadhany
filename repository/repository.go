@@ -9,6 +9,7 @@ type Repository struct {
 	CategoryRepo  CategoryRepository
 	RackRepo      RackRepository
 	WarehouseRepo WarehouseRepository
+	ProductRepo   ProductRepository
 }
 
 func NewRepository(db *sql.DB) Repository {
@@ -17,5 +18,6 @@ func NewRepository(db *sql.DB) Repository {
 		CategoryRepo:  NewCategoryRepository(db),
 		RackRepo:      NewRackRepository(db),
 		WarehouseRepo: NewWarehouseRepository(db),
+		ProductRepo:   NewProductRepository(db),
 	}
 }

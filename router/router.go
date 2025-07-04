@@ -43,5 +43,13 @@ func NewRouter(h handler.Handler) *chi.Mux {
 		r.Delete("/{id}", h.WarehouseHandler.Delete)
 	})
 
+	r.Route("/api/v1/products", func(r chi.Router) {
+		r.Get("/", h.ProductHandler.GetAll)
+		r.Post("/", h.ProductHandler.Create)
+		r.Get("/{id}", h.ProductHandler.GetByID)
+		r.Put("/{id}", h.ProductHandler.Update)
+		r.Delete("/{id}", h.ProductHandler.Delete)
+	})
+
 	return r
 }
