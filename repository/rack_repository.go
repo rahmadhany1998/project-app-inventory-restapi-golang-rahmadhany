@@ -3,6 +3,9 @@ package repository
 import (
 	"database/sql"
 	"project-app-inventory-restapi-golang-rahmadhany/model"
+	"strconv"
+
+	"go.uber.org/zap"
 )
 
 type RackRepository interface {
@@ -15,17 +18,22 @@ type RackRepository interface {
 }
 
 type rackRepository struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zap.Logger
 }
 
-func NewRackRepository(db *sql.DB) RackRepository {
-	return &rackRepository{db}
+func NewRackRepository(db *sql.DB, log *zap.Logger) RackRepository {
+	return &rackRepository{
+		db:  db,
+		log: log,
+	}
 }
 
 func (r *rackRepository) GetAll(page, limit int) ([]model.Rack, error) {
 	offset := (page - 1) * limit
 	rows, err := r.db.Query("SELECT id, name, description FROM racks ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -34,6 +42,7 @@ func (r *rackRepository) GetAll(page, limit int) ([]model.Rack, error) {
 	for rows.Next() {
 		var rs model.Rack
 		if err := rows.Scan(&rs.ID, &rs.Name, &rs.Description); err != nil {
+			r.log.Error("error : ", zap.Error(err))
 			return nil, err
 		}
 		racks = append(racks, rs)
@@ -45,6 +54,7 @@ func (r *rackRepository) GetByID(id int) (*model.Rack, error) {
 	row := r.db.QueryRow("SELECT id, name, description FROM racks WHERE id = $1", id)
 	var rs model.Rack
 	if err := row.Scan(&rs.ID, &rs.Name, &rs.Description); err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	return &rs, nil
@@ -55,6 +65,7 @@ func (r *rackRepository) Create(rack model.Rack) (int, error) {
 	err := r.db.QueryRow(
 		"INSERT INTO racks(name, description) VALUES($1, $2) RETURNING id",
 		rack.Name, rack.Description).Scan(&id)
+	r.log.Info("rack created : ", zap.String("insert", "id : "+strconv.Itoa(id)))
 	return id, err
 }
 
@@ -62,11 +73,13 @@ func (r *rackRepository) Update(rack model.Rack) error {
 	_, err := r.db.Exec(
 		"UPDATE racks SET name=$1, description=$2 WHERE id=$3",
 		rack.Name, rack.Description, rack.ID)
+	r.log.Info("rack updated : ", zap.String("update", "id : "+strconv.Itoa(rack.ID)))
 	return err
 }
 
 func (r *rackRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM racks WHERE id = $1", id)
+	r.log.Info("rack deleted : ", zap.String("delete", "id : "+strconv.Itoa(id)))
 	return err
 }
 

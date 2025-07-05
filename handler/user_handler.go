@@ -13,10 +13,11 @@ import (
 
 type UserHandler struct {
 	Service service.Service
+	Config  utils.Configuration
 }
 
-func NewUserHandler(s service.Service) UserHandler {
-	return UserHandler{Service: s}
+func NewUserHandler(s service.Service, cfg utils.Configuration) UserHandler {
+	return UserHandler{Service: s, Config: cfg}
 }
 
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -25,13 +26,13 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil || page < 1 {
 		page = 1
 	}
-	limit := 10
+	limit := h.Config.Limit
 	users, totalRecords, totalPages, err := h.Service.UserService.GetAll(page, limit)
 	if err != nil {
-		utils.WriteError(w, "Failed to get users", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of users", http.StatusOK, users, &utils.Pagination{
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, users, &utils.Pagination{
 		CurrentPage:  page,
 		Limit:        limit,
 		TotalPages:   totalPages,
@@ -43,10 +44,10 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	user, err := h.Service.UserService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "User not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "User found", http.StatusOK, user, nil)
+	utils.WriteSuccess(w, "An internal server error occurred.", http.StatusOK, user, nil)
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -62,10 +63,10 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := h.Service.UserService.Create(req)
 	if err != nil {
-		utils.WriteError(w, "Failed to create user", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User created", http.StatusCreated, map[string]int{"id": id}, nil)
+	utils.WriteSuccess(w, "Data created successfully", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -83,17 +84,17 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.UserService.Update(id, req); err != nil {
-		utils.WriteError(w, "Failed to update user", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User updated", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, nil, nil)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := h.Service.UserService.Delete(id); err != nil {
-		utils.WriteError(w, "Failed to delete user", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User deleted", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Data deleted", http.StatusNoContent, nil, nil)
 }

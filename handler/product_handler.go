@@ -17,10 +17,11 @@ import (
 
 type ProductHandler struct {
 	Service service.Service
+	Config  utils.Configuration
 }
 
-func NewProductHandler(s service.Service) ProductHandler {
-	return ProductHandler{Service: s}
+func NewProductHandler(s service.Service, cfg utils.Configuration) ProductHandler {
+	return ProductHandler{Service: s, Config: cfg}
 }
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +30,13 @@ func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil || page < 1 {
 		page = 1
 	}
-	limit := 10
+	limit := h.Config.Limit
 	products, totalRecords, totalPages, err := h.Service.ProductService.GetAll(page, limit)
 	if err != nil {
-		utils.WriteError(w, "Failed to get products", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of products", http.StatusOK, products, &utils.Pagination{
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, products, &utils.Pagination{
 		CurrentPage:  page,
 		Limit:        limit,
 		TotalPages:   totalPages,
@@ -47,10 +48,10 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	product, err := h.Service.ProductService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "Product not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Product found", http.StatusOK, product, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, product, nil)
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -83,13 +84,13 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	savepath := fmt.Sprintf("/static/uploads/%d_%s", time.Now().Unix(), handler.Filename)
 	dst, err := os.Create(filename)
 	if err != nil {
-		utils.WriteError(w, "Failed to save image", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
 	_, err = io.Copy(dst, file)
 	if err != nil {
-		utils.WriteError(w, "Failed to save image", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
 
@@ -113,11 +114,11 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.Service.ProductService.Create(product)
 	if err != nil {
-		utils.WriteError(w, "Failed to create product", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
 
-	utils.WriteSuccess(w, "Product created successfully", http.StatusCreated, map[string]int{"id": id}, nil)
+	utils.WriteSuccess(w, "Data created successfully", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +139,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// Ambil data lama dari DB
 	existing, err := h.Service.ProductService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "Product not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
 
@@ -161,13 +162,13 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 		dst, err := os.Create(imagePath)
 		if err != nil {
-			utils.WriteError(w, "Failed to save image", http.StatusInternalServerError)
+			utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 			return
 		}
 		defer dst.Close()
 		_, err = io.Copy(dst, file)
 		if err != nil {
-			utils.WriteError(w, "Failed to save image", http.StatusInternalServerError)
+			utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 			return
 		}
 		if existing.Image != "" {
@@ -200,11 +201,11 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.ProductService.Update(id, product)
 	if err != nil {
-		utils.WriteError(w, "Failed to update product", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
 
-	utils.WriteSuccess(w, "Product updated successfully", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, nil, nil)
 }
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +213,7 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	existing, err := h.Service.ProductService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "Product not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
 
@@ -220,8 +221,8 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	_ = os.Remove(path)
 
 	if err := h.Service.ProductService.Delete(id); err != nil {
-		utils.WriteError(w, "Failed to delete product", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Product deleted", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Data deleted", http.StatusNoContent, nil, nil)
 }

@@ -3,6 +3,9 @@ package repository
 import (
 	"database/sql"
 	"project-app-inventory-restapi-golang-rahmadhany/model"
+	"strconv"
+
+	"go.uber.org/zap"
 )
 
 type UserRepository interface {
@@ -15,17 +18,22 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zap.Logger
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &userRepository{db}
+func NewUserRepository(db *sql.DB, log *zap.Logger) UserRepository {
+	return &userRepository{
+		db:  db,
+		log: log,
+	}
 }
 
 func (r *userRepository) GetAll(page, limit int) ([]model.User, error) {
 	offset := (page - 1) * limit
 	rows, err := r.db.Query("SELECT id, name, email, role, password, status FROM users ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -34,6 +42,7 @@ func (r *userRepository) GetAll(page, limit int) ([]model.User, error) {
 	for rows.Next() {
 		var u model.User
 		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.Password, &u.Status); err != nil {
+			r.log.Error("error : ", zap.Error(err))
 			return nil, err
 		}
 		users = append(users, u)
@@ -45,6 +54,7 @@ func (r *userRepository) GetByID(id int) (*model.User, error) {
 	row := r.db.QueryRow("SELECT id, name, email, role, password, status FROM users WHERE id = $1", id)
 	var u model.User
 	if err := row.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.Password, &u.Status); err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	return &u, nil
@@ -55,6 +65,7 @@ func (r *userRepository) Create(user model.User) (int, error) {
 	err := r.db.QueryRow(
 		"INSERT INTO users(name, email, role, password, status) VALUES($1, $2, $3, $4, $5) RETURNING id",
 		user.Name, user.Email, user.Role, user.Password, user.Status).Scan(&id)
+	r.log.Info("user created : ", zap.String("insert", "id : "+strconv.Itoa(id)))
 	return id, err
 }
 
@@ -62,11 +73,13 @@ func (r *userRepository) Update(user model.User) error {
 	_, err := r.db.Exec(
 		"UPDATE users SET name=$1, email=$2, role=$3, password=$4, status=$5 WHERE id=$6",
 		user.Name, user.Email, user.Role, user.Password, user.Status, user.ID)
+	r.log.Info("user updated : ", zap.String("update", "id : "+strconv.Itoa(user.ID)))
 	return err
 }
 
 func (r *userRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
+	r.log.Info("user deleted : ", zap.String("delete", "id : "+strconv.Itoa(id)))
 	return err
 }
 

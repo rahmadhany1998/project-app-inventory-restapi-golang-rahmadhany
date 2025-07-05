@@ -13,10 +13,11 @@ import (
 
 type RackHandler struct {
 	Service service.Service
+	Config  utils.Configuration
 }
 
-func NewRackHandler(s service.Service) RackHandler {
-	return RackHandler{Service: s}
+func NewRackHandler(s service.Service, cfg utils.Configuration) RackHandler {
+	return RackHandler{Service: s, Config: cfg}
 }
 
 func (h *RackHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -25,13 +26,13 @@ func (h *RackHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil || page < 1 {
 		page = 1
 	}
-	limit := 10
+	limit := h.Config.Limit
 	racks, totalRecords, totalPages, err := h.Service.RackService.GetAll(page, limit)
 	if err != nil {
-		utils.WriteError(w, "Failed to get racks", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of racks", http.StatusOK, racks, &utils.Pagination{
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, racks, &utils.Pagination{
 		CurrentPage:  page,
 		Limit:        limit,
 		TotalPages:   totalPages,
@@ -43,10 +44,10 @@ func (h *RackHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	Rack, err := h.Service.RackService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "Rack not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Rack found", http.StatusOK, Rack, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, Rack, nil)
 }
 
 func (h *RackHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +65,10 @@ func (h *RackHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.Service.RackService.Create(req)
 	if err != nil {
-		utils.WriteError(w, "Failed to create Rack", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack created", http.StatusCreated, map[string]int{"id": id}, nil)
+	utils.WriteSuccess(w, "Data Created successfully.", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *RackHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -85,17 +86,17 @@ func (h *RackHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.RackService.Update(id, req); err != nil {
-		utils.WriteError(w, "Failed to update Rack", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack updated", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, nil, nil)
 }
 
 func (h *RackHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	if err := h.Service.RackService.Delete(id); err != nil {
-		utils.WriteError(w, "Failed to delete Rack", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack deleted", http.StatusOK, nil, nil)
+	utils.WriteSuccess(w, "Rack deleted", http.StatusNoContent, nil, nil)
 }

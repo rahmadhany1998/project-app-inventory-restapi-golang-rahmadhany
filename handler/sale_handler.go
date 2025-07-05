@@ -13,10 +13,11 @@ import (
 
 type SaleHandler struct {
 	Service service.Service
+	Config  utils.Configuration
 }
 
-func NewSaleHandler(s service.Service) SaleHandler {
-	return SaleHandler{Service: s}
+func NewSaleHandler(s service.Service, cfg utils.Configuration) SaleHandler {
+	return SaleHandler{Service: s, Config: cfg}
 }
 
 func (h *SaleHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -25,10 +26,10 @@ func (h *SaleHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil || page < 1 {
 		page = 1
 	}
-	limit := 10
+	limit := h.Config.Limit
 	sales, totalRecords, totalPages, err := h.Service.SaleService.GetAll(page, limit)
 	if err != nil {
-		utils.WriteError(w, "Failed to get sales", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
 	utils.WriteSuccess(w, "List of sales", http.StatusOK, sales, &utils.Pagination{
@@ -43,10 +44,10 @@ func (h *SaleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	sale, err := h.Service.SaleService.GetByID(id)
 	if err != nil {
-		utils.WriteError(w, "Sale not found", http.StatusNotFound)
+		utils.WriteError(w, "Data not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Sale found", http.StatusOK, sale, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, sale, nil)
 }
 
 func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +65,10 @@ func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.Service.SaleService.Create(req)
 	if err != nil {
-		utils.WriteError(w, "Failed to create sale", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Sale created", http.StatusCreated, map[string]int{"id": id}, nil)
+	utils.WriteSuccess(w, "Data created successfully", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *SaleHandler) GetReportSummaryByDate(w http.ResponseWriter, r *http.Request) {
@@ -81,8 +82,8 @@ func (h *SaleHandler) GetReportSummaryByDate(w http.ResponseWriter, r *http.Requ
 
 	report, err := h.Service.SaleService.GetReportSummaryByDate(start, end)
 	if err != nil {
-		utils.WriteError(w, "Failed to retrieve report", http.StatusInternalServerError)
+		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Report retrieved successfully.", http.StatusOK, report, nil)
+	utils.WriteSuccess(w, "Data processed successfully.", http.StatusOK, report, nil)
 }

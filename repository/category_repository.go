@@ -3,6 +3,9 @@ package repository
 import (
 	"database/sql"
 	"project-app-inventory-restapi-golang-rahmadhany/model"
+	"strconv"
+
+	"go.uber.org/zap"
 )
 
 type CategoryRepository interface {
@@ -15,17 +18,22 @@ type CategoryRepository interface {
 }
 
 type categoryRepository struct {
-	db *sql.DB
+	db  *sql.DB
+	log *zap.Logger
 }
 
-func NewCategoryRepository(db *sql.DB) CategoryRepository {
-	return &categoryRepository{db}
+func NewCategoryRepository(db *sql.DB, log *zap.Logger) CategoryRepository {
+	return &categoryRepository{
+		db:  db,
+		log: log,
+	}
 }
 
 func (r *categoryRepository) GetAll(page, limit int) ([]model.Category, error) {
 	offset := (page - 1) * limit
 	rows, err := r.db.Query("SELECT id, name, description FROM categories ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -34,6 +42,7 @@ func (r *categoryRepository) GetAll(page, limit int) ([]model.Category, error) {
 	for rows.Next() {
 		var c model.Category
 		if err := rows.Scan(&c.ID, &c.Name, &c.Description); err != nil {
+			r.log.Error("error : ", zap.Error(err))
 			return nil, err
 		}
 		categories = append(categories, c)
@@ -45,6 +54,7 @@ func (r *categoryRepository) GetByID(id int) (*model.Category, error) {
 	row := r.db.QueryRow("SELECT id, name, description FROM categories WHERE id = $1", id)
 	var c model.Category
 	if err := row.Scan(&c.ID, &c.Name, &c.Description); err != nil {
+		r.log.Error("error : ", zap.Error(err))
 		return nil, err
 	}
 	return &c, nil
@@ -55,6 +65,7 @@ func (r *categoryRepository) Create(category model.Category) (int, error) {
 	err := r.db.QueryRow(
 		"INSERT INTO categories(name, description) VALUES($1, $2) RETURNING id",
 		category.Name, category.Description).Scan(&id)
+	r.log.Info("category created : ", zap.String("insert", "id : "+strconv.Itoa(id)))
 	return id, err
 }
 
@@ -62,11 +73,13 @@ func (r *categoryRepository) Update(category model.Category) error {
 	_, err := r.db.Exec(
 		"UPDATE categories SET name=$1, description=$2 WHERE id=$3",
 		category.Name, category.Description, category.ID)
+	r.log.Info("category updated : ", zap.String("update", "id : "+strconv.Itoa(category.ID)))
 	return err
 }
 
 func (r *categoryRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM categories WHERE id = $1", id)
+	r.log.Info("category deleted : ", zap.String("delete", "id : "+strconv.Itoa(id)))
 	return err
 }
 
