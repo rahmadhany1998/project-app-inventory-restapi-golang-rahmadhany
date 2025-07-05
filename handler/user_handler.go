@@ -20,12 +20,23 @@ func NewUserHandler(s service.Service) UserHandler {
 }
 
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := h.Service.UserService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+	users, totalRecords, totalPages, err := h.Service.UserService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get users", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of users", users)
+	utils.WriteSuccess(w, "List of users", http.StatusOK, users, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +46,7 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "User not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "User found", user)
+	utils.WriteSuccess(w, "User found", http.StatusOK, user, nil)
 }
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +60,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User created", map[string]int{"id": id})
+	utils.WriteSuccess(w, "User created", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +74,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to update user", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User updated", nil)
+	utils.WriteSuccess(w, "User updated", http.StatusOK, nil, nil)
 }
 
 func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -72,5 +83,5 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to delete user", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "User deleted", nil)
+	utils.WriteSuccess(w, "User deleted", http.StatusOK, nil, nil)
 }

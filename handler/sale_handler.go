@@ -20,13 +20,23 @@ func NewSaleHandler(s service.Service) SaleHandler {
 }
 
 func (h *SaleHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	sales, err := h.Service.SaleService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+	sales, totalRecords, totalPages, err := h.Service.SaleService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get sales", http.StatusInternalServerError)
 		return
 	}
-
-	utils.WriteSuccess(w, "List of sales", sales)
+	utils.WriteSuccess(w, "List of sales", http.StatusOK, sales, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *SaleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +46,7 @@ func (h *SaleHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Sale not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Sale found", sale)
+	utils.WriteSuccess(w, "Sale found", http.StatusOK, sale, nil)
 }
 
 func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +60,7 @@ func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to create sale", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Sale created", map[string]int{"id": id})
+	utils.WriteSuccess(w, "Sale created", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *SaleHandler) GetReportSummaryByDate(w http.ResponseWriter, r *http.Request) {
@@ -67,5 +77,5 @@ func (h *SaleHandler) GetReportSummaryByDate(w http.ResponseWriter, r *http.Requ
 		utils.WriteError(w, "Failed to retrieve report", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Report retrieved successfully.", report)
+	utils.WriteSuccess(w, "Report retrieved successfully.", http.StatusOK, report, nil)
 }

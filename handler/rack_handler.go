@@ -20,12 +20,23 @@ func NewRackHandler(s service.Service) RackHandler {
 }
 
 func (h *RackHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	racks, err := h.Service.RackService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+	racks, totalRecords, totalPages, err := h.Service.RackService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get racks", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of racks", racks)
+	utils.WriteSuccess(w, "List of racks", http.StatusOK, racks, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *RackHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +46,7 @@ func (h *RackHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Rack not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Rack found", Rack)
+	utils.WriteSuccess(w, "Rack found", http.StatusOK, Rack, nil)
 }
 
 func (h *RackHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +60,7 @@ func (h *RackHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to create Rack", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack created", map[string]int{"id": id})
+	utils.WriteSuccess(w, "Rack created", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *RackHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +74,7 @@ func (h *RackHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to update Rack", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack updated", nil)
+	utils.WriteSuccess(w, "Rack updated", http.StatusOK, nil, nil)
 }
 
 func (h *RackHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -72,5 +83,5 @@ func (h *RackHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to delete Rack", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack deleted", nil)
+	utils.WriteSuccess(w, "Rack deleted", http.StatusOK, nil, nil)
 }

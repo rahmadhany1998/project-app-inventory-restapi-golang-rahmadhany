@@ -20,12 +20,23 @@ func NewWarehouseHandler(s service.Service) WarehouseHandler {
 }
 
 func (h *WarehouseHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	warehouses, err := h.Service.WarehouseService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+	warehouses, totalRecords, totalPages, err := h.Service.WarehouseService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get warehouses", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of warehouses", warehouses)
+	utils.WriteSuccess(w, "List of warehouses", http.StatusOK, warehouses, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *WarehouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +46,7 @@ func (h *WarehouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Warehouse not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Warehouse found", Warehouse)
+	utils.WriteSuccess(w, "Warehouse found", http.StatusOK, Warehouse, nil)
 }
 
 func (h *WarehouseHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +60,7 @@ func (h *WarehouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to create Warehouse", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Warehouse created", map[string]int{"id": id})
+	utils.WriteSuccess(w, "Warehouse created", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *WarehouseHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +74,7 @@ func (h *WarehouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to update Warehouse", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Warehouse updated", nil)
+	utils.WriteSuccess(w, "Warehouse updated", http.StatusOK, nil, nil)
 }
 
 func (h *WarehouseHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -72,5 +83,5 @@ func (h *WarehouseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to delete Warehouse", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Warehouse deleted", nil)
+	utils.WriteSuccess(w, "Warehouse deleted", http.StatusOK, nil, nil)
 }

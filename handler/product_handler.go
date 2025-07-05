@@ -24,12 +24,23 @@ func NewProductHandler(s service.Service) ProductHandler {
 }
 
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	products, err := h.Service.ProductService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+	products, totalRecords, totalPages, err := h.Service.ProductService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get products", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of products", products)
+	utils.WriteSuccess(w, "List of products", http.StatusOK, products, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +50,7 @@ func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Product not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Product found", product)
+	utils.WriteSuccess(w, "Product found", http.StatusOK, product, nil)
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +111,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteSuccess(w, "Product created successfully", id)
+	utils.WriteSuccess(w, "Product created successfully", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +192,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteSuccess(w, "Product updated successfully", nil)
+	utils.WriteSuccess(w, "Product updated successfully", http.StatusOK, nil, nil)
 }
 
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -200,5 +211,5 @@ func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to delete product", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Product deleted", nil)
+	utils.WriteSuccess(w, "Product deleted", http.StatusOK, nil, nil)
 }

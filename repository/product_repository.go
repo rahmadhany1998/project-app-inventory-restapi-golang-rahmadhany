@@ -6,11 +6,12 @@ import (
 )
 
 type ProductRepository interface {
-	GetAll() ([]model.Product, error)
+	GetAll(page, limit int) ([]model.Product, error)
 	GetByID(id int) (*model.Product, error)
 	Create(product model.Product) (int, error)
 	Update(product model.Product) error
 	Delete(id int) error
+	CountAll() (int, error)
 }
 
 type productRepository struct {
@@ -21,8 +22,9 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 	return &productRepository{db}
 }
 
-func (r *productRepository) GetAll() ([]model.Product, error) {
-	rows, err := r.db.Query("SELECT id, name, category_id, rack_id, warehouse_id, inventory_count, retail_price, selling_price, image FROM products ORDER BY id ASC")
+func (r *productRepository) GetAll(page, limit int) ([]model.Product, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, name, category_id, rack_id, warehouse_id, inventory_count, retail_price, selling_price, image FROM products ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,10 @@ func (r *productRepository) Update(product model.Product) error {
 func (r *productRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM products WHERE id = $1", id)
 	return err
+}
+
+func (r *productRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM products").Scan(&count)
+	return count, err
 }

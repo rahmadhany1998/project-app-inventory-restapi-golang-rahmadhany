@@ -5,17 +5,26 @@ import (
 	"net/http"
 )
 
-type Response struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+type Pagination struct {
+	CurrentPage  int `json:"current_page"`
+	Limit        int `json:"limit"`
+	TotalPages   int `json:"total_pages"`
+	TotalRecords int `json:"total_records"`
 }
 
-func WriteSuccess(w http.ResponseWriter, message string, data interface{}) {
-	writeJSON(w, http.StatusOK, Response{
-		Status:  "success",
-		Message: message,
-		Data:    data,
+type Response struct {
+	Status     string      `json:"status"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data,omitempty"`
+	Pagination *Pagination `json:"pagination,omitempty"`
+}
+
+func WriteSuccess(w http.ResponseWriter, message string, statusCode int, data interface{}, pagination *Pagination) {
+	writeJSON(w, statusCode, Response{
+		Status:     "success",
+		Message:    message,
+		Data:       data,
+		Pagination: pagination,
 	})
 }
 

@@ -6,10 +6,11 @@ import (
 )
 
 type SaleRepository interface {
-	GetAll() ([]model.Sale, error)
+	GetAll(page, limit int) ([]model.Sale, error)
 	GetByID(id int) (*model.Sale, error)
 	Create(sale model.Sale) (int, error)
 	GetReportSummaryByDate(start, end string) (*model.Report, error)
+	CountAll() (int, error)
 }
 
 type saleRepository struct {
@@ -20,8 +21,9 @@ func NewSaleRepository(db *sql.DB) SaleRepository {
 	return &saleRepository{db}
 }
 
-func (r *saleRepository) GetAll() ([]model.Sale, error) {
-	rows, err := r.db.Query("SELECT id, product_id, item_sold, total_bill, date_sale FROM sales ORDER BY id ASC")
+func (r *saleRepository) GetAll(page, limit int) ([]model.Sale, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, product_id, item_sold, total_bill, date_sale FROM sales ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -62,4 +64,10 @@ func (r *saleRepository) GetReportSummaryByDate(start, end string) (*model.Repor
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (r *saleRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM sales").Scan(&count)
+	return count, err
 }

@@ -1,13 +1,14 @@
 package service
 
 import (
+	"math"
 	"project-app-inventory-restapi-golang-rahmadhany/dto"
 	"project-app-inventory-restapi-golang-rahmadhany/model"
 	"project-app-inventory-restapi-golang-rahmadhany/repository"
 )
 
 type ProductService interface {
-	GetAll() ([]model.Product, error)
+	GetAll(page, limit int) ([]model.Product, int, int, error)
 	GetByID(id int) (*model.Product, error)
 	Create(input dto.CreateProductRequest) (int, error)
 	Update(id int, input dto.UpdateProductRequest) error
@@ -22,8 +23,22 @@ func NewProductService(repo repository.Repository) ProductService {
 	return &productService{Repo: repo}
 }
 
-func (s *productService) GetAll() ([]model.Product, error) {
-	return s.Repo.ProductRepo.GetAll()
+func (s *productService) GetAll(page, limit int) ([]model.Product, int, int, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	totalRecords, err := s.Repo.ProductRepo.CountAll()
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	products, err := s.Repo.ProductRepo.GetAll(page, limit)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	totalPages := int(math.Ceil(float64(totalRecords) / float64(limit)))
+
+	return products, totalRecords, totalPages, nil
 }
 
 func (s *productService) GetByID(id int) (*model.Product, error) {

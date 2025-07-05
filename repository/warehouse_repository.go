@@ -6,11 +6,12 @@ import (
 )
 
 type WarehouseRepository interface {
-	GetAll() ([]model.Warehouse, error)
+	GetAll(page, limit int) ([]model.Warehouse, error)
 	GetByID(id int) (*model.Warehouse, error)
 	Create(warehouse model.Warehouse) (int, error)
 	Update(warehouse model.Warehouse) error
 	Delete(id int) error
+	CountAll() (int, error)
 }
 
 type warehouseRepository struct {
@@ -21,8 +22,9 @@ func NewWarehouseRepository(db *sql.DB) WarehouseRepository {
 	return &warehouseRepository{db}
 }
 
-func (r *warehouseRepository) GetAll() ([]model.Warehouse, error) {
-	rows, err := r.db.Query("SELECT id, name, description FROM warehouses ORDER BY id ASC")
+func (r *warehouseRepository) GetAll(page, limit int) ([]model.Warehouse, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, name, description FROM warehouses ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,10 @@ func (r *warehouseRepository) Update(warehouse model.Warehouse) error {
 func (r *warehouseRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM warehouses WHERE id = $1", id)
 	return err
+}
+
+func (r *warehouseRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM warehouses").Scan(&count)
+	return count, err
 }

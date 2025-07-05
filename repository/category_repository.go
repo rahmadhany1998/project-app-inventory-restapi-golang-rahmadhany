@@ -6,11 +6,12 @@ import (
 )
 
 type CategoryRepository interface {
-	GetAll() ([]model.Category, error)
+	GetAll(page, limit int) ([]model.Category, error)
 	GetByID(id int) (*model.Category, error)
 	Create(category model.Category) (int, error)
 	Update(category model.Category) error
 	Delete(id int) error
+	CountAll() (int, error)
 }
 
 type categoryRepository struct {
@@ -21,8 +22,9 @@ func NewCategoryRepository(db *sql.DB) CategoryRepository {
 	return &categoryRepository{db}
 }
 
-func (r *categoryRepository) GetAll() ([]model.Category, error) {
-	rows, err := r.db.Query("SELECT id, name, description FROM categories ORDER BY id ASC")
+func (r *categoryRepository) GetAll(page, limit int) ([]model.Category, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, name, description FROM categories ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,10 @@ func (r *categoryRepository) Update(category model.Category) error {
 func (r *categoryRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM categories WHERE id = $1", id)
 	return err
+}
+
+func (r *categoryRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM categories").Scan(&count)
+	return count, err
 }

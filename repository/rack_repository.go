@@ -6,11 +6,12 @@ import (
 )
 
 type RackRepository interface {
-	GetAll() ([]model.Rack, error)
+	GetAll(page, limit int) ([]model.Rack, error)
 	GetByID(id int) (*model.Rack, error)
 	Create(rack model.Rack) (int, error)
 	Update(rack model.Rack) error
 	Delete(id int) error
+	CountAll() (int, error)
 }
 
 type rackRepository struct {
@@ -21,8 +22,9 @@ func NewRackRepository(db *sql.DB) RackRepository {
 	return &rackRepository{db}
 }
 
-func (r *rackRepository) GetAll() ([]model.Rack, error) {
-	rows, err := r.db.Query("SELECT id, name, description FROM racks ORDER BY id ASC")
+func (r *rackRepository) GetAll(page, limit int) ([]model.Rack, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, name, description FROM racks ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,10 @@ func (r *rackRepository) Update(rack model.Rack) error {
 func (r *rackRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM racks WHERE id = $1", id)
 	return err
+}
+
+func (r *rackRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM racks").Scan(&count)
+	return count, err
 }

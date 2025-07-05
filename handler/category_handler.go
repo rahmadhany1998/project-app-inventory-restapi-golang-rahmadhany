@@ -20,12 +20,24 @@ func NewCategoryHandler(s service.Service) CategoryHandler {
 }
 
 func (h *CategoryHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.Service.CategoryService.GetAll()
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit := 10
+
+	categories, totalRecords, totalPages, err := h.Service.CategoryService.GetAll(page, limit)
 	if err != nil {
 		utils.WriteError(w, "Failed to get categories", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "List of categories", categories)
+	utils.WriteSuccess(w, "List of categories", http.StatusOK, categories, &utils.Pagination{
+		CurrentPage:  page,
+		Limit:        limit,
+		TotalPages:   totalPages,
+		TotalRecords: totalRecords,
+	})
 }
 
 func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +47,7 @@ func (h *CategoryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Category not found", http.StatusNotFound)
 		return
 	}
-	utils.WriteSuccess(w, "Category found", category)
+	utils.WriteSuccess(w, "Category found", http.StatusOK, category, nil)
 }
 
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +61,7 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to create category", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Category created", map[string]int{"id": id})
+	utils.WriteSuccess(w, "Category created", http.StatusCreated, map[string]int{"id": id}, nil)
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +75,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to update category", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Category updated", nil)
+	utils.WriteSuccess(w, "Category updated", http.StatusOK, nil, nil)
 }
 
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -72,5 +84,5 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Failed to delete category", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Category deleted", nil)
+	utils.WriteSuccess(w, "Category deleted", http.StatusOK, nil, nil)
 }

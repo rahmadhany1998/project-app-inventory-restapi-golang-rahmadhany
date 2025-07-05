@@ -6,11 +6,12 @@ import (
 )
 
 type UserRepository interface {
-	GetAll() ([]model.User, error)
+	GetAll(page, limit int) ([]model.User, error)
 	GetByID(id int) (*model.User, error)
 	Create(user model.User) (int, error)
 	Update(user model.User) error
 	Delete(id int) error
+	CountAll() (int, error)
 }
 
 type userRepository struct {
@@ -21,8 +22,9 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db}
 }
 
-func (r *userRepository) GetAll() ([]model.User, error) {
-	rows, err := r.db.Query("SELECT id, name, email, role, password, status FROM users ORDER BY id ASC")
+func (r *userRepository) GetAll(page, limit int) ([]model.User, error) {
+	offset := (page - 1) * limit
+	rows, err := r.db.Query("SELECT id, name, email, role, password, status FROM users ORDER BY id ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,10 @@ func (r *userRepository) Update(user model.User) error {
 func (r *userRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
 	return err
+}
+
+func (r *userRepository) CountAll() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	return count, err
 }
