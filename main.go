@@ -38,7 +38,7 @@ func main() {
 	r := router.NewRouter(h)
 
 	log.Println("server starting on port : 8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":"+config.Port, r); err != nil {
 		logger.Fatal("can't run service", zap.Error(err))
 	}
 }
