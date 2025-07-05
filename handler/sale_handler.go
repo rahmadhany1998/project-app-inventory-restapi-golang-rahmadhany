@@ -52,3 +52,20 @@ func (h *SaleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.WriteSuccess(w, "Sale created", map[string]int{"id": id})
 }
+
+func (h *SaleHandler) GetReportSummaryByDate(w http.ResponseWriter, r *http.Request) {
+	start := r.URL.Query().Get("start_date")
+	end := r.URL.Query().Get("end_date")
+
+	if start == "" || end == "" {
+		utils.WriteError(w, "start_date and end_date are required", http.StatusBadRequest)
+		return
+	}
+
+	report, err := h.Service.SaleService.GetReportSummaryByDate(start, end)
+	if err != nil {
+		utils.WriteError(w, "Failed to retrieve report", http.StatusInternalServerError)
+		return
+	}
+	utils.WriteSuccess(w, "Report retrieved successfully.", report)
+}

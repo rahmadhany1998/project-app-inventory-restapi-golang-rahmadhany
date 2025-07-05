@@ -57,5 +57,9 @@ func NewRouter(h handler.Handler) *chi.Mux {
 		r.Get("/{id}", h.SaleHandler.GetByID)
 	})
 
+	r.Route("/api/v1/report", func(r chi.Router) {
+		r.Get("/summary", h.SaleHandler.GetReportSummaryByDate)
+	})
+
 	return r
 }

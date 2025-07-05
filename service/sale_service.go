@@ -10,6 +10,7 @@ type SaleService interface {
 	GetAll() ([]model.Sale, error)
 	GetByID(id int) (*model.Sale, error)
 	Create(input dto.CreateSaleRequest) (int, error)
+	GetReportSummaryByDate(start, end string) (*model.Report, error)
 }
 
 type saleService struct {
@@ -43,4 +44,8 @@ func (s *saleService) Create(input dto.CreateSaleRequest) (int, error) {
 		TotalBill: totalbill,
 		DateSale:  input.DateSale,
 	})
+}
+
+func (s *saleService) GetReportSummaryByDate(start, end string) (*model.Report, error) {
+	return s.Repo.SaleRepo.GetReportSummaryByDate(start, end)
 }
