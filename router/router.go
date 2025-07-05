@@ -1,6 +1,7 @@
 package router
 
 import (
+	"net/http"
 	"project-app-inventory-restapi-golang-rahmadhany/handler"
 
 	"github.com/go-chi/chi/v5"
@@ -10,6 +11,8 @@ import (
 func NewRouter(h handler.Handler) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	r.Route("/api/v1/users", func(r chi.Router) {
 		r.Get("/", h.UserHandler.GetAll)
