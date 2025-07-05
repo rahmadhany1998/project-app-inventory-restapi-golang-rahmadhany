@@ -55,6 +55,13 @@ func (h *WarehouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	id, err := h.Service.WarehouseService.Create(req)
 	if err != nil {
 		utils.WriteError(w, "Failed to create Warehouse", http.StatusInternalServerError)
@@ -70,6 +77,13 @@ func (h *WarehouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	if err := h.Service.WarehouseService.Update(id, req); err != nil {
 		utils.WriteError(w, "Failed to update Warehouse", http.StatusInternalServerError)
 		return

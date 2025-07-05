@@ -55,6 +55,11 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
 	id, err := h.Service.UserService.Create(req)
 	if err != nil {
 		utils.WriteError(w, "Failed to create user", http.StatusInternalServerError)
@@ -70,6 +75,13 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	if err := h.Service.UserService.Update(id, req); err != nil {
 		utils.WriteError(w, "Failed to update user", http.StatusInternalServerError)
 		return

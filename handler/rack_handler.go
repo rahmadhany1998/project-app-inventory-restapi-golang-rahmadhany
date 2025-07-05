@@ -55,6 +55,13 @@ func (h *RackHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	id, err := h.Service.RackService.Create(req)
 	if err != nil {
 		utils.WriteError(w, "Failed to create Rack", http.StatusInternalServerError)
@@ -70,6 +77,13 @@ func (h *RackHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	if err := h.Service.RackService.Update(id, req); err != nil {
 		utils.WriteError(w, "Failed to update Rack", http.StatusInternalServerError)
 		return

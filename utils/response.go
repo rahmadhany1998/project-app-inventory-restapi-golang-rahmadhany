@@ -13,15 +13,21 @@ type Pagination struct {
 }
 
 type Response struct {
-	Status     string      `json:"status"`
+	Success    bool        `json:"success"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data,omitempty"`
 	Pagination *Pagination `json:"pagination,omitempty"`
 }
 
+type ResponseValidationError struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Errors  interface{} `json:"errors"`
+}
+
 func WriteSuccess(w http.ResponseWriter, message string, statusCode int, data interface{}, pagination *Pagination) {
 	writeJSON(w, statusCode, Response{
-		Status:     "success",
+		Success:    true,
 		Message:    message,
 		Data:       data,
 		Pagination: pagination,
@@ -30,10 +36,21 @@ func WriteSuccess(w http.ResponseWriter, message string, statusCode int, data in
 
 func WriteError(w http.ResponseWriter, message string, statusCode int) {
 	writeJSON(w, statusCode, Response{
-		Status:  "error",
+		Success: false,
 		Message: message,
 		Data:    nil,
 	})
+}
+
+func ResponseErrorValidation(w http.ResponseWriter, statusCode int, message string, error interface{}) {
+	response := ResponseValidationError{
+		Success: false,
+		Message: message,
+		Errors:  error,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, resp Response) {

@@ -105,6 +105,12 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Image:          savepath, // path ke file yang disimpan
 	}
 
+	validation, err := utils.ValidateData(product)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	id, err := h.Service.ProductService.Create(product)
 	if err != nil {
 		utils.WriteError(w, "Failed to create product", http.StatusInternalServerError)
@@ -184,6 +190,12 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		RetailPrice:    retailPrice,
 		SellingPrice:   sellingPrice,
 		Image:          savepath,
+	}
+
+	validation, err := utils.ValidateData(product)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
 	}
 
 	err = h.Service.ProductService.Update(id, product)

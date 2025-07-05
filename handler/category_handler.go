@@ -56,6 +56,13 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	id, err := h.Service.CategoryService.Create(req)
 	if err != nil {
 		utils.WriteError(w, "Failed to create category", http.StatusInternalServerError)
@@ -71,6 +78,13 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
+	validation, err := utils.ValidateData(req)
+	if err != nil {
+		utils.ResponseErrorValidation(w, http.StatusBadRequest, "Validation error", validation)
+		return
+	}
+
 	if err := h.Service.CategoryService.Update(id, req); err != nil {
 		utils.WriteError(w, "Failed to update category", http.StatusInternalServerError)
 		return
