@@ -98,5 +98,5 @@ func (h *WarehouseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Data deleted", http.StatusNoContent, nil, nil)
+	utils.WriteSuccess(w, "Data deleted", http.StatusOK, nil, nil)
 }

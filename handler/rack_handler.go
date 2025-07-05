@@ -98,5 +98,5 @@ func (h *RackHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, "An internal server error occurred.", http.StatusInternalServerError)
 		return
 	}
-	utils.WriteSuccess(w, "Rack deleted", http.StatusNoContent, nil, nil)
+	utils.WriteSuccess(w, "Rack deleted", http.StatusOK, nil, nil)
 }
